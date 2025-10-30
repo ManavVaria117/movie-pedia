@@ -52,17 +52,15 @@ export default function Home() {
             <div className="text-yellow-600 dark:text-yellow-400 font-medium mb-2">
               Connection Error
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
               Unable to connect to the movie database. This might be due to network restrictions.
-            </p>
+            </div>
+            <div className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">Try these solutions:</div>
             <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
-              <p className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">Try these solutions:</p>
-              <ol className="list-decimal list-inside text-sm text-gray-700 dark:text-gray-300 space-y-1">
-                <li>Connect to a different network</li>
-                <li>Use a VPN service</li>
-                <li>Check your internet connection</li>
+              <div className="list-decimal list-inside text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                <li>Use a VPN service and refresh</li>
                 <li>Try again in a few minutes</li>
-              </ol>
+              </div>
             </div>
           </div>
         );
@@ -108,7 +106,9 @@ export default function Home() {
           </div>
         ) : error ? (
           <div className="text-center py-10">
-            <p className="text-red-500 text-lg">{error}</p>
+            <div className="text-red-500 text-lg">
+              {typeof error === 'string' ? error : error}
+            </div>
             <button
               onClick={() => fetchMovies(searchQuery)}
               className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
