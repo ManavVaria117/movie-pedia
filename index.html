@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MovieHub - Discover Amazing Movies</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                50: '#f0f9ff',
+                100: '#e0f2fe',
+                200: '#bae6fd',
+                300: '#7dd3fc',
+                400: '#38bdf8',
+                500: '#0ea5e9',
+                600: '#0284c7',
+                700: '#0369a1',
+                800: '#075985',
+                900: '#0c4a6e',
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style type="text/tailwindcss">
+      @layer base {
+        html {
+          @apply scroll-smooth;
+        }
+        
+        body {
+          @apply min-h-full bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200;
+        }
+        
+        /* Smooth page transition */
+        .page-enter {
+          @apply opacity-0;
+        }
+        .page-enter-active {
+          @apply opacity-100 transition-opacity duration-300;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+          @apply font-bold tracking-tight;
+        }
+        
+        h1 {
+          @apply text-4xl sm:text-5xl md:text-6xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent;
+        }
+        
+        h2 {
+          @apply text-3xl sm:text-4xl text-gray-800 dark:text-white mb-6 relative pb-2;
+        }
+        
+        h2:after {
+          content: '';
+          @apply absolute bottom-0 left-0 w-16 h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full;
+        }
+        
+        .pb-150 {
+          padding-bottom: 150%;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+          @apply w-2 h-2;
+        }
+        
+        ::-webkit-scrollbar-track {
+          @apply bg-gray-100 dark:bg-gray-800;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+          @apply bg-gray-300 dark:bg-gray-600 rounded-full hover:bg-gray-400 dark:hover:bg-gray-500;
+        }
+      }
+    </style>
+  </head>
+  <body class="h-full">
+    <div id="root" class="h-full"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
