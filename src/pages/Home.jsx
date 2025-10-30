@@ -4,8 +4,8 @@ import axios from 'axios';
 import MovieCard from '../components/MovieCard';
 import SearchBar from '../components/SearchBar';
 
-const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
-const API_URL = 'https://api.themoviedb.org/3';
+const OMDB_API_KEY = import.meta.env.VITE_OMDB_API_KEY;
+const OMDB_BASE_URL = import.meta.env.VITE_OMDB_API_URL || 'https://www.omdbapi.com';
 
 export default function Home() {
   const [movies, setMovies] = useState([]);
@@ -30,22 +30,50 @@ export default function Home() {
     setDarkMode(!darkMode);
   };
 
-  const fetchMovies = async (query = '') => {
+  const fetchMovies = async (query = '', page = 1) => {
     try {
       setLoading(true);
       setError(null);
       
-      let url;
-      if (query) {
-        url = `${API_URL}/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(query)}`;
-      } else {
-        url = `${API_URL}/movie/popular?api_key=${API_KEY}`;
-      }
+      const params = {
+        apikey: OMDB_API_KEY,
+        s: query || 'movie',  // Default search term if none provided
+        type: 'movie',
+        page: page
+      };
       
-      const response = await axios.get(url);
-      setMovies(response.data.results);
+      console.log('Making OMDb API request to:', OMDB_BASE_URL);
+      const response = await axios.get(OMDB_BASE_URL, { params });
+      
+      if (response.data && response.data.Response === 'True') {
+        const moviesData = response.data.Search.map(movie => ({
+          id: movie.imdbID,
+          title: movie.Title,
+          poster_path: movie.Poster !== 'N/A' ? movie.Poster : null,
+          release_date: movie.Year || 'N/A',
+          vote_average: 0,  // OMDb doesn't provide this in search results
+          overview: '',     // Will be fetched when movie is selected
+          backdrop_path: null  // Will be fetched when movie is selected
+        }));
+        
+        setMovies(moviesData);
+      } else {
+        setMovies([]);
+        setError(response.data?.Error || 'No movies found. Try a different search term.');
+      }
     } catch (err) {
       console.error('Error fetching movies:', err);
+      
+      if (err.response?.status === 401) {
+        setError('Invalid API key. Please check your OMDb API key in the .env file.');
+      } else if (err.response?.status === 404) {
+        setError('The requested resource could not be found.');
+      } else if (err.response?.status === 429) {
+        setError('API request limit reached. OMDb has a daily limit on free tier.');
+      } else {
+        setError(err.message || 'Failed to fetch movies. Please try again later.');
+      }
+      
       if (err.code === 'ERR_NETWORK' || err.message === 'Network Error') {
         setError(
           <div className="text-center p-6 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
@@ -53,19 +81,58 @@ export default function Home() {
               Connection Error
             </div>
             <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-              Unable to connect to the movie database. This might be due to network restrictions.
+              Unable to connect to the movie database. Please check your internet connection.
             </div>
-            <div className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-2">Try these solutions:</div>
-            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
-              <div className="list-decimal list-inside text-sm text-gray-700 dark:text-gray-300 space-y-1">
-                <li>Use a VPN service and refresh</li>
-                <li>Try again in a few minutes</li>
-              </div>
+            <div className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+              {err.message}
+            </div>
+          </div>
+        );
+      } else if (err.response?.status === 403) {
+        setError(
+          <div className="text-center p-6 bg-red-50 dark:bg-red-900/20 rounded-lg">
+            <div className="text-red-600 dark:text-red-400 font-medium mb-2">
+              Authentication Failed (403 Forbidden)
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+              There was an issue with the API key or your subscription. Please verify:
+              <ul className="list-disc list-inside mt-2 text-left">
+                <li>Your RapidAPI key is correct and active</li>
+                <li>You're subscribed to the Movies Database API</li>
+                <li>Your subscription hasn't expired</li>
+              </ul>
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+              API Host: {RAPIDAPI_HOST}
+            </div>
+          </div>
+        );
+      } else if (err.response?.status === 429) {
+        const retryAfter = err.response?.headers?.['retry-after'] || 'a few';
+        setError(
+          <div className="text-center p-6 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+            <div className="text-orange-600 dark:text-orange-400 font-medium mb-2">
+              Rate Limit Exceeded (429 Too Many Requests)
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+              You've made too many requests to the API. Please wait {retryAfter} seconds and try again.
             </div>
           </div>
         );
       } else {
-        setError('Failed to fetch movies. Please try again later.');
+        setError(
+          <div className="text-center p-6 bg-red-50 dark:bg-red-900/20 rounded-lg">
+            <div className="text-red-600 dark:text-red-400 font-medium mb-2">
+              Error {err.response?.status || 'Unknown Error'}
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+              {err.response?.data?.message || 'Failed to fetch movies. Please try again later.'}
+            </div>
+            <div className="text-xs text-gray-500 dark:text-gray-500 mt-2">
+              {err.message}
+            </div>
+          </div>
+        );
       }
     } finally {
       setLoading(false);
@@ -77,8 +144,16 @@ export default function Home() {
   }, []);
 
   const handleSearch = (query) => {
-    setSearchQuery(query);
-    fetchMovies(query);
+    const searchQuery = query.trim();
+    setSearchQuery(searchQuery);
+    
+    if (searchQuery === '') {
+      fetchMovies();
+    } else {
+      // Reset movies before new search to show loading state
+      setMovies([]);
+      fetchMovies(searchQuery);
+    }
   };
 
   return (
