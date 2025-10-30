@@ -11,7 +11,19 @@
   ],
   "routes": [
     {
-      "src": "/.*",
+      "src": "/_next/static/(.*)",
+      "dest": "/_next/static/$1"
+    },
+    {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "/favicon.ico"
+    },
+    {
+      "src": "/(.*)",
       "dest": "/index.html"
     }
   ]
